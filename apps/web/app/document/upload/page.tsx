@@ -215,13 +215,13 @@ export default function DocumentWorkspacePage() {
                       className="flex items-center justify-between p-3 border rounded-lg bg-slate-50/50 dark:bg-slate-900/40 text-xs"
                     >
                       <div className="flex items-center space-x-3 w-full mr-3 min-w-0">
-                        <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                         <div className="flex-1 min-w-0 space-y-1">
                           <div className="flex items-center justify-between gap-2">
                             <p className="font-medium truncate text-foreground">
                               {file.name}
                             </p>
-                            <span className="text-[11px] text-muted-foreground flex-shrink-0">
+                            <span className="text-[11px] text-muted-foreground shrink-0">
                               {(file.size / (1024 * 1024)).toFixed(2)} MB
                             </span>
                           </div>
@@ -254,7 +254,7 @@ export default function DocumentWorkspacePage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground flex-shrink-0"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
                         onClick={() => removeFile(id)}
                       >
                         <X className="w-3.5 h-3.5" />

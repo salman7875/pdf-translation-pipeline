@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -9,13 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,30 +20,169 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Search,
-  Filter,
-  ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   MoreHorizontal,
-  Eye,
   Download,
-  Calendar,
-  MapPin,
+  SplitSquareHorizontal,
+  ArrowLeft,
+  ZoomIn,
+  ZoomOut,
+  Maximize,
+  FileText,
 } from "lucide-react";
+import { DocumentRecord } from "./types/index.type";
 import { sampleData } from "./data";
+import { DataField } from "./components/data-field";
+import { DataSection } from "./components/data-section";
 
 export default function DocumentRegistryPage() {
   const [selectedNature, setSelectedNature] = useState<string>("all");
+  const [comparingDoc, setComparingDoc] = useState<DocumentRecord | null>(null);
+
+  if (comparingDoc) {
+    return (
+      <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
+        <div className="h-14 border-b bg-background flex items-center justify-between px-4 shrink-0">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setComparingDoc(null)}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Table
+            </Button>
+            <div className="h-4 w-px bg-border"></div>
+            <h1 className="text-sm font-semibold flex items-center gap-2">
+              <FileText className="w-4 h-4 text-primary" />
+              Comparing Record: {comparingDoc["Document No.& Year"]}
+            </h1>
+          </div>
+          <Button size="sm">Approve Validation</Button>
+        </div>
+
+        <div className="flex-1 flex overflow-hidden">
+          <div className="w-1/2 lg:w-[40%] border-r bg-background overflow-y-auto p-6 custom-scrollbar">
+            <h2 className="text-lg font-bold mb-4">Extracted Data</h2>
+            <div className="space-y-6">
+              <DataSection title="Primary Details">
+                <DataField
+                  label="Document No. & Year"
+                  value={comparingDoc["Document No.& Year"]}
+                />
+                <DataField label="Nature" value={comparingDoc.Nature} />
+                <DataField
+                  label="PR Number"
+                  value={comparingDoc["PR Number"]}
+                />
+                <DataField
+                  label="Registration Dates"
+                  value={comparingDoc[
+                    "Date of Execution & Date of Presentation & Date of Registration"
+                  ].join(" | ")}
+                />
+              </DataSection>
+
+              <DataSection title="Parties">
+                <DataField
+                  label="Executant(s)"
+                  value={comparingDoc["Name of Executant(s)"].map((n, i) => (
+                    <div key={i}>{n}</div>
+                  ))}
+                />
+                <DataField
+                  label="Claimant(s)"
+                  value={comparingDoc["Name of Claimant(s)"].map((n, i) => (
+                    <div key={i}>{n}</div>
+                  ))}
+                />
+              </DataSection>
+
+              <DataSection title="Valuation">
+                <DataField
+                  label="Consideration Value"
+                  value={comparingDoc["Consideration Value"]}
+                />
+                <DataField
+                  label="Market Value"
+                  value={comparingDoc["Market Value"]}
+                />
+              </DataSection>
+
+              <DataSection title="Property Details">
+                <DataField
+                  label="Type & Extent"
+                  value={`${comparingDoc["Property Type"]} - ${comparingDoc["Property Extent"]}`}
+                />
+                <DataField
+                  label="Location"
+                  value={comparingDoc["Village & Street"]}
+                />
+                <DataField
+                  label="Survey No"
+                  value={comparingDoc["Survey No"].join(", ")}
+                />
+                <DataField label="Plot No" value={comparingDoc["Plot No"]} />
+                <DataField
+                  label="Boundary Details"
+                  value={comparingDoc["Boundary Details"]}
+                />
+                <DataField
+                  label="Schedule Remarks"
+                  value={comparingDoc["Schedule Remarks"]}
+                />
+              </DataSection>
+            </div>
+          </div>
+
+          <div className="flex-1 bg-slate-200/50 dark:bg-slate-900 flex flex-col">
+            <div className="h-12 border-b bg-background/50 backdrop-blur-sm flex items-center justify-between px-4 shrink-0">
+              <div className="text-xs font-medium text-muted-foreground">
+                Page 1 of 4
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <span className="text-xs font-medium px-2">100%</span>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+                <div className="w-px h-4 bg-border mx-2"></div>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Maximize className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 flex justify-center">
+              <div className="bg-white dark:bg-slate-100 shadow-xl w-full max-w-2xl h-250 rounded-sm p-12 text-slate-900">
+                <div className="border-b-2 border-slate-300 pb-4 mb-8 text-center">
+                  <h3 className="font-bold text-xl uppercase tracking-widest">
+                    Deed of Conveyance
+                  </h3>
+                  <p className="text-sm mt-2 text-slate-600">
+                    Document No. {comparingDoc["Document No.& Year"]}
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-slate-200 rounded w-full"></div>
+                  <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                  <div className="h-4 bg-slate-200 rounded w-full"></div>
+                  <div className="h-4 bg-slate-200 rounded w-4/5 mt-8"></div>
+                  <div className="h-4 bg-slate-200 rounded w-full"></div>
+                  <div className="h-4 bg-slate-200 rounded w-full"></div>
+                </div>
+                <div className="mt-12 flex justify-center items-center h-64 border-2 border-dashed border-slate-300 text-slate-400">
+                  [ Actual PDF Rendered Here via react-pdf / iframe ]
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 md:p-8 space-y-6">
@@ -63,11 +196,6 @@ export default function DocumentRegistryPage() {
             entries.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs">
-            <Download className="w-3.5 h-3.5 mr-1.5" /> Export Records
-          </Button>
-        </div>
       </div>
 
       <Card className="border bg-card shadow-xs">
@@ -77,49 +205,15 @@ export default function DocumentRegistryPage() {
               <CardTitle className="text-base font-semibold">
                 Registered Documents
               </CardTitle>
-              <CardDescription className="text-xs">
-                Showing entries registered under target survey boundaries.
-              </CardDescription>
             </div>
-
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative flex-1 sm:w-64">
                 <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
                 <Input
-                  placeholder="Search Doc No, Executant..."
+                  placeholder="Search Doc No..."
                   className="pl-8 h-8 text-xs"
                 />
               </div>
-
-              <Select
-                value={selectedNature}
-                onValueChange={(value) => setSelectedNature(value ?? "all")}
-              >
-                <SelectTrigger className="h-8 text-xs w-40">
-                  <Filter className="w-3.5 h-3.5 mr-1 text-muted-foreground" />
-                  <SelectValue placeholder="Nature of Doc" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Natures</SelectItem>
-                  <SelectItem value="conveyance">
-                    Conveyance Non Metro/UA
-                  </SelectItem>
-                  <SelectItem value="mortgage">Mortgage</SelectItem>
-                  <SelectItem value="lease">Lease Agreement</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select defaultValue="all">
-                <SelectTrigger className="h-8 text-xs w-32.5">
-                  <SelectValue placeholder="Property Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="house-site">House Site</SelectItem>
-                  <SelectItem value="agricultural">Agricultural</SelectItem>
-                  <SelectItem value="commercial">Commercial</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardHeader>
@@ -129,65 +223,23 @@ export default function DocumentRegistryPage() {
             <Table className="text-xs">
               <TableHeader className="bg-slate-100/60 dark:bg-slate-900/60">
                 <TableRow>
-                  <TableHead className="w-15 text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 p-0 font-semibold text-xs"
-                    >
-                      Sr. <ArrowUpDown className="ml-1 h-3 w-3" />
-                    </Button>
-                  </TableHead>
-                  <TableHead className="min-w-30">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 p-0 font-semibold text-xs"
-                    >
-                      Doc No & Year <ArrowUpDown className="ml-1 h-3 w-3" />
-                    </Button>
-                  </TableHead>
-                  <TableHead className="min-w-35">
-                    Dates (Exec/Pres/Reg)
-                  </TableHead>
-                  <TableHead className="min-w-37.5">Nature & Value</TableHead>
+                  <TableHead className="w-15 text-center">Sr.</TableHead>
+                  <TableHead className="min-w-30">Doc No & Year</TableHead>
+                  <TableHead className="min-w-37.5">Nature</TableHead>
                   <TableHead className="min-w-45">Executant(s)</TableHead>
-                  <TableHead className="min-w-37.5">Claimant(s)</TableHead>
                   <TableHead className="min-w-40">Property Details</TableHead>
-                  <TableHead className="min-w-25">Survey & Plot</TableHead>
-                  <TableHead className="min-w-50">Remarks</TableHead>
-                  <TableHead className="w-12.5 text-right">Actions</TableHead>
+                  <TableHead className="w-20 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sampleData.map((row) => (
-                  <TableRow
-                    key={row["Sr.No"]}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40"
-                  >
+                  <TableRow key={row["Sr.No"]}>
                     <TableCell className="font-medium text-center">
                       {row["Sr.No"]}
                     </TableCell>
                     <TableCell>
                       <div className="font-semibold text-foreground">
                         {row["Document No.& Year"]}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
-                        PR: {row["PR Number"]}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1 text-[11px]">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-muted-foreground" />
-                          <span>
-                            {
-                              row[
-                                "Date of Execution & Date of Presentation & Date of Registration"
-                              ][0]
-                            }
-                          </span>
-                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -197,93 +249,34 @@ export default function DocumentRegistryPage() {
                       >
                         {row.Nature}
                       </Badge>
-                      <div className="text-[11px] font-medium text-foreground">
-                        {row["Consideration Value"]}
-                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1 max-w-50">
                         {row["Name of Executant(s)"].map((name, i) => (
-                          <div
-                            key={i}
-                            className="text-[11px] leading-tight text-foreground/90"
-                          >
+                          <div key={i} className="text-[11px] truncate">
                             {name}
                           </div>
                         ))}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        {row["Name of Claimant(s)"].map((claimant, i) => (
-                          <div
-                            key={i}
-                            className="text-[11px] leading-tight text-foreground/90"
-                          >
-                            {claimant}
-                          </div>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-0.5">
-                        <div className="font-medium text-foreground">
-                          {row["Property Type"]}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {row["Property Extent"]}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3 h-3 shrink-0" />
-                          <span className="truncate">
-                            {row["Village & Street"]}
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="text-[11px]">
-                          <span className="font-medium">Plot:</span>{" "}
-                          {row["Plot No"]}
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {row["Survey No"].map((sNo) => (
-                            <Badge
-                              key={sNo}
-                              variant="secondary"
-                              className="text-[9px] px-1 py-0"
-                            >
-                              {sNo}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-60 space-y-1">
-                        <p className="text-[11px] line-clamp-2 text-foreground/80">
-                          {row["Document Remarks"]}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground line-clamp-2">
-                          {row["Boundary Details"]}
-                        </p>
+                      <div className="font-medium">{row["Property Type"]}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {row["Property Extent"]}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                          >
-                            <MoreHorizontal className="w-3.5 h-3.5" />
-                          </Button>
+                          <MoreHorizontal className="w-3.5 h-3.5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="text-xs">
-                            <Eye className="w-3.5 h-3.5 mr-2" /> View Details
+                          <DropdownMenuItem
+                            className="text-xs font-medium text-primary cursor-pointer"
+                            onClick={() => setComparingDoc(row)}
+                          >
+                            <SplitSquareHorizontal className="w-3.5 h-3.5 mr-2" />{" "}
+                            Compare w/ PDF
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-xs">
                             <Download className="w-3.5 h-3.5 mr-2" /> Download
@@ -296,63 +289,6 @@ export default function DocumentRegistryPage() {
                 ))}
               </TableBody>
             </Table>
-          </div>
-
-          <div className="flex items-center justify-between px-4 py-3 border-t dark:border-slate-800">
-            <div className="flex items-center text-xs text-muted-foreground gap-2">
-              <span>Rows per page</span>
-              <Select defaultValue="10">
-                <SelectTrigger className="h-7 w-16.25 text-xs">
-                  <SelectValue placeholder="10" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="hidden sm:inline-block ml-2">
-                Showing 1-1 of 1 entries
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-muted-foreground mr-2">
-                Page 1 of 1
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-7 w-7"
-                disabled
-              >
-                <ChevronsLeft className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-7 w-7"
-                disabled
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-7 w-7"
-                disabled
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-7 w-7"
-                disabled
-              >
-                <ChevronsRight className="w-3.5 h-3.5" />
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
