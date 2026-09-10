@@ -1,10 +1,14 @@
 export async function translateTamilToEnglish(text: string) {
-  const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ta|en`;
+  const apiUrl = `http://localhost:5001/translate`;
 
   try {
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q: text }),
+    });
     const data = await response.json();
-    return data.responseData.translatedText;
+    return data.translatedText;
   } catch (error) {
     console.error("Translation failed:", error);
     return null;

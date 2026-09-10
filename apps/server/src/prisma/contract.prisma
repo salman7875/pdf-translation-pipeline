@@ -1,0 +1,61 @@
+// use prisma-next
+
+model User {
+  id       Int       @id @default(autoincrement())
+  email    String    @unique
+  username String?
+  password String
+  document Document?
+
+  @@map("user")
+}
+
+model Document {
+  id          Int    @id @default(autoincrement())
+  documentUrl String
+  userId      Int    @unique
+  user        User   @relation(fields: [userId], references: [id])
+
+  @@map("document")
+}
+
+model Translation {
+  id                 Int         @id @default(autoincrement())
+  srNo               String      @unique
+  documentNo         String
+  dateOfExecution    String
+  nature             String
+  executants         Executant[]
+  claimants          Claimant[]
+  volNo              String
+  considerationValue String
+  marketValue        String
+  prNumber           String
+  propertyType       String
+  propertyExtent     String
+  documentRemarks    String
+  plotNo             String
+  surveyNo           String
+  boundaryDetail     String
+  scheduleRemarks    String
+
+  @@map("translation")
+}
+
+model Executant {
+  id            Int         @id @default(autoincrement())
+  name          String
+  translationId Int
+  translation   Translation @relation(fields: [translationId], references: [id])
+
+  @@map("executant")
+}
+
+model Claimant {
+  id            Int         @id @default(autoincrement())
+  name          String
+  translationId Int
+  translation   Translation @relation(fields: [translationId], references: [id])
+
+  @@map("claimant")
+}

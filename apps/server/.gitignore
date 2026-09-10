@@ -2,3 +2,5 @@
 /dist
 .env
 /assets
+node_modules/
+dist/

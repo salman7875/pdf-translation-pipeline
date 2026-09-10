@@ -1,8 +1,12 @@
+import { config } from "dotenv";
+config();
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFParse } from "pdf-parse";
 import { parsePdfRowsToStructure } from "./utils/pdfParseRowsToStructure.js";
+import { llmTranslate } from "./utils/genai.js";
+import { translateLayer } from "./utils/translateLayer.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,7 +30,10 @@ const main = async () => {
     }
   }
   const structeredData = parsePdfRowsToStructure(allRows);
-  console.log(structeredData.at(0));
+  const translated = await translateLayer(structeredData);
+  console.log(translated);
 };
-
 await main();
+// llmTranslate(
+//   "எல்ைல விபரங்கள் : ேமற்ப டி மைனப்பி ரிவில் ேபா ெதருவுக்கும் (ெதற்கு ), ேமற் ப நிலுைவக்கும் (வடக்கு ), பிளா மற்றும் ேமற் ப டி மைனப்பி ரி (கிழக்கு )",
+// );

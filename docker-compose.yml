@@ -1,0 +1,25 @@
+services:
+  postgres:
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_USER=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  models:
+    - qwen
+
+models:
+  qwen:
+    model: ai/qwen2.5
+    context_size: 8192
+    runtime_flags:
+      - "--temp"
+      - "0.7"
+      - "--top-p"
+      - "0.9"
+
+volumes:
+  pg_data:
