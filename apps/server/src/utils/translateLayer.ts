@@ -1,57 +1,107 @@
-import { llmTranslate } from "./genai.js";
+const TRANSLATOR_URL = process.env.TRANSLATOR_URL ?? "http://localhost:8000";
+const BATCH_SIZE = 16;
+const CONCURRENCY = 2;
+const TRANSLATABLE_FIELDS = [
+  "Name of Executant(s)",
+  "Name of Claimant(s)",
+  "Document Remarks",
+  "Boundary Details",
+  "Schedule Remarks",
+] as const;
+const CURRENCY_FIELDS = ["Consideration Value", "Market Value"] as const;
 
-const mapConcurrent = async <T, R>(
-  array: T[],
-  batchSize: number,
-  fn: (item: T, index: number) => Promise<R>,
-): Promise<R[]> => {
-  const results: R[] = [];
-  for (let i = 0; i < array.length; i += batchSize) {
-    const batch = array.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map((item, batchIndex) => fn(item, i + batchIndex)),
-    );
-    results.push(...batchResults);
+const normalizeCurrency = (value: unknown): unknown =>
+  typeof value === "string" ? value.replaceAll("ரூ.", "Rs.") : value;
+
+type TranslationResponse = { translations: string[] };
+
+const translateBatch = async (texts: string[]): Promise<string[]> => {
+  const response = await fetch(`${TRANSLATOR_URL}/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ texts }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Translation service returned HTTP ${response.status}`);
   }
-  return results;
+
+  const result = (await response.json()) as TranslationResponse;
+  if (
+    !Array.isArray(result.translations) ||
+    result.translations.length !== texts.length
+  ) {
+    throw new Error(
+      "IndicTrans2 service returned an invalid translation count",
+    );
+  }
+  return result.translations;
+};
+
+const translateUniqueTexts = async (
+  texts: string[],
+): Promise<Map<string, string>> => {
+  const uniqueTexts = [
+    ...new Set(texts.map((text) => text.trim()).filter(Boolean)),
+  ];
+  const translations = new Map<string, string>();
+
+  for (
+    let start = 0;
+    start < uniqueTexts.length;
+    start += BATCH_SIZE * CONCURRENCY
+  ) {
+    const batches = Array.from({ length: CONCURRENCY }, (_, offset) =>
+      uniqueTexts.slice(
+        start + offset * BATCH_SIZE,
+        start + (offset + 1) * BATCH_SIZE,
+      ),
+    ).filter((batch) => batch.length > 0);
+    const translatedBatches = await Promise.all(batches.map(translateBatch));
+
+    batches.forEach((batch, batchIndex) => {
+      batch.forEach((text, textIndex) => {
+        translations.set(text, translatedBatches[batchIndex]![textIndex]!);
+      });
+    });
+  }
+
+  return translations;
 };
 
 export const translateLayer = async (data: any[]): Promise<any[]> => {
-  return await mapConcurrent(data, 2, async (d: any) => {
-    const executantResult = await mapConcurrent(
-      d["Name of Executant(s)"] || [],
-      2,
-      (item: string) => llmTranslate(item ?? ""),
-    );
+  const texts: string[] = [];
+  for (const record of data) {
+    for (const field of TRANSLATABLE_FIELDS) {
+      const value = record[field];
+      if (Array.isArray(value))
+        texts.push(
+          ...value.filter((item): item is string => typeof item === "string"),
+        );
+      else if (typeof value === "string") {
+        texts.push(value);
+      }
+    }
+  }
 
-    const claimantResult = await mapConcurrent(
-      d["Name of Claimant(s)"] || [],
-      2,
-      (item: string) => llmTranslate(item ?? ""),
-    );
-
-    const [remarksResult, boundaryResult, scheduleResult] = await Promise.all([
-      llmTranslate(d["Document Remarks"] ?? ""),
-      llmTranslate(d["Boundary Details"] ?? ""),
-      llmTranslate(d["Schedule Remarks"] ?? ""),
-    ]);
-
-    return {
-      ...d,
-      "Name of Executant(s)": executantResult,
-      "Name of Claimant(s)": claimantResult,
-      "Consideration Value": (d["Consideration Value"] || "").replace(
-        "ரூ.",
-        "Rs.",
-      ),
-      "Market Value": (d["Market Value"] || "").replace("ரூ.", "Rs."),
-      "Document Remarks": remarksResult,
-      "Property Extent": (d["Property Extent"] || "").replace(
-        "சதுரமீட்டர்",
-        "Sq.Mt",
-      ),
-      "Boundary Details": boundaryResult,
-      "Schedule Remarks": scheduleResult,
-    };
+  const translations = await translateUniqueTexts(texts);
+  return data.map((record) => {
+    const translatedRecord = { ...record };
+    for (const field of TRANSLATABLE_FIELDS) {
+      const value = record[field];
+      if (Array.isArray(value)) {
+        translatedRecord[field] = value.map((item: unknown) =>
+          typeof item === "string"
+            ? (translations.get(item.trim()) ?? item)
+            : item,
+        );
+      } else if (typeof value === "string") {
+        translatedRecord[field] = translations.get(value.trim()) ?? value;
+      }
+    }
+    for (const field of CURRENCY_FIELDS) {
+      translatedRecord[field] = normalizeCurrency(record[field]);
+    }
+    return translatedRecord;
   });
 };

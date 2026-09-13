@@ -2,18 +2,17 @@ import OpenAI from "openai";
 
 const URL = "http://localhost:12434/engines/v1";
 
-const SYS_PROMPT = `You are a professional legal translator specializing in Tamil 
-               land deeds and boundary schedules. 
-               Review the provided Tamil text, correct any minor character 
-               layout or typing artifacts, and provide a precise, 
-               standard Indian legal English boundary translation. Only output the english translation`;
+const SYS_PROMPT =
+  "Translate Tamil land-deed text into precise standard Indian legal English. " +
+  "Preserve the input JSON structure and keys. Translate Tamil text only, " +
+  "correcting minor character-layout artifacts. Return only valid JSON.";
 
 const client = new OpenAI({
   baseURL: URL,
   apiKey: "dmr",
 });
 
-export const llmTranslate = async (text: string) => {
+export const llmTranslate = async (text: string): Promise<string> => {
   try {
     const response = await client.chat.completions.create({
       model: "ai/qwen2.5",
@@ -21,12 +20,17 @@ export const llmTranslate = async (text: string) => {
         { role: "system", content: SYS_PROMPT },
         { role: "user", content: text },
       ],
+      temperature: 0,
+      max_tokens: 2048,
     });
 
-    console.log(response.choices[0]?.message?.content);
-
-    return response.choices[0]?.message?.content;
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error("The translation model returned an empty response");
+    }
+    return content;
   } catch (error) {
-    console.log(error);
+    console.error("Translation request failed:", error);
+    throw error;
   }
 };

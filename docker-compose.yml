@@ -1,15 +1,5 @@
-services:
-  postgres:
-    container_name: postgres
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_PASSWORD=mysecretpassword
-      - POSTGRES_USER=postgres
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-  models:
-    - qwen
+volumes:
+  pg_data:
 
 models:
   qwen:
@@ -21,5 +11,17 @@ models:
       - "--top-p"
       - "0.9"
 
-volumes:
-  pg_data:
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_USER=postgres
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  models:
+    - qwen
