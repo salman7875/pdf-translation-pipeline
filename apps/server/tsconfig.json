@@ -27,5 +27,5 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true
   },
-  "exclude": ["dist"]
+  "exclude": ["dist", "prisma.config.ts"]
 }

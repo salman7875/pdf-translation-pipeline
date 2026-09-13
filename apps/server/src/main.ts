@@ -28,8 +28,8 @@ const main = async () => {
       }
     }
   }
-  const structeredData = parsePdfRowsToStructure(allRows);
-  const translated = await translateLayer(structeredData);
-  console.log(translated);
+  // const structeredData = parsePdfRowsToStructure(allRows);
+  // // const translated = await translateLayer(structeredData);
+  // // console.log(translated);
 };
 await main();

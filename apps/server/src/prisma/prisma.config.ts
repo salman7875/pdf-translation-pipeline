@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { definePrismaConfig } from "@prisma/cli-engine";
 import { defineConfig as ormConfig } from "@prisma/orm-postgres/config";
 
-config({ path: fileURLToPath(new URL("./.env", import.meta.url)) });
+config({ path: fileURLToPath(new URL("../../.env", import.meta.url)) });
 
 const databaseUrl = process.env["DATABASE_URL"];
 
