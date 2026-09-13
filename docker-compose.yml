@@ -1,15 +1,8 @@
 volumes:
   pg_data:
-
-models:
-  qwen:
-    model: ai/qwen2.5
-    context_size: 8192
-    runtime_flags:
-      - "--temp"
-      - "0.7"
-      - "--top-p"
-      - "0.9"
+  redis_data:
+  floci_data:
+  redis-insight-data:
 
 services:
   postgres:
@@ -23,5 +16,47 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
-  models:
-    - qwen
+  redis-infra:
+    image: redis
+    container_name: redis-infra
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    volumes:
+      - redis-insight-data:/data
+    depends_on:
+      - redis-infra
+
+  bull:
+    image: venatum/bull-board:latest
+    ports:
+      - "4000:3000"
+    environment:
+      - REDIS_HOST=redis-infra
+      - REDIS_PORT=6379
+    depends_on:
+      redis-infra:
+        condition: service_healthy
+  floci:
+    image: floci/floci:latest-compat
+    ports:
+      - "4566:4566"
+    environment:
+      - FLOCI_HOSTNAME=floci
+      - FLOCI_STORAGE_MODE=persistent
+      - FLOCI_MAX_REQUEST_SIZE=100000000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - floci_data:/app/data
