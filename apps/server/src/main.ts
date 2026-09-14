@@ -1,35 +1,24 @@
 import { config } from "dotenv";
-config();
-import fs from "node:fs";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PDFParse } from "pdf-parse";
-import { parsePdfRowsToStructure } from "./utils/pdfParseRowsToStructure.js";
-import { translateLayer } from "./utils/translateLayer.js";
+import express from "express";
+import authRoutes from "./modules/auth/auth.routes";
+import documentRoutes from "./modules/document/document.routes";
+import { authorizationMiddleware } from "./middleware/authorization.middleware";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+config({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
 
-const dataBuffer = fs.readFileSync(
-  path.join(__dirname, "..", "/assets", "tamil_test.pdf"),
-);
+const app = express();
+const port = Number(process.env.PORT ?? 3000);
 
-const main = async () => {
-  const parser = new PDFParse({ data: dataBuffer });
-  const result: any = await parser.getTable({});
-  await parser.destroy();
+app.use(express.json());
+app.use(authorizationMiddleware);
 
-  const allRows: string[][] = [];
+app.get("/health", (_req, res) => {
+  res.json({ success: true, message: "Server is healthy" });
+});
+app.use("/api/auth", authRoutes);
+app.use("/api/documents", documentRoutes);
 
-  for (const page of result.pages) {
-    for (const tables of page.tables) {
-      for (const rows of tables) {
-        allRows.push(rows);
-      }
-    }
-  }
-  // const structeredData = parsePdfRowsToStructure(allRows);
-  // // const translated = await translateLayer(structeredData);
-  // // console.log(translated);
-};
-await main();
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});

@@ -1,4 +1,4 @@
-import { createStructure, type StructureT } from "./structureDTO.js";
+import { createStructure, type StructureT } from "../dto/structureDTO.js";
 
 const cleanText = (text: string | null | undefined): string => {
   if (!text) return "";
