@@ -11,7 +11,11 @@ export const initBucketCors = async (bucketName = "my-bucket") => {
       new ListBucketsCommand({ BucketRegion: "us-east-1" }),
     );
 
-    if (bucketInfo.Buckets && bucketInfo.Buckets.length < 1) {
+    const bucketExists = bucketInfo.Buckets?.some(
+      (bucket) => bucket.Name === bucketName,
+    );
+
+    if (!bucketExists) {
       await s3Client.send(new CreateBucketCommand({ Bucket: bucketName }));
     }
 
@@ -23,7 +27,10 @@ export const initBucketCors = async (bucketName = "my-bucket") => {
             {
               AllowedHeaders: ["*"],
               AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
-              AllowedOrigins: ["*"],
+              AllowedOrigins: [
+                process.env.WEB_ORIGIN ?? "http://localhost:3001",
+                "http://localhost:3000",
+              ],
               ExposeHeaders: ["ETag"],
             },
           ],

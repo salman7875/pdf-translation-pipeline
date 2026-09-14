@@ -16,11 +16,21 @@ const normalizeCurrency = (value: unknown): unknown =>
 type TranslationResponse = { translations: string[] };
 
 const translateBatch = async (texts: string[]): Promise<string[]> => {
-  const response = await fetch(`${TRANSLATOR_URL}/translate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ texts }),
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${TRANSLATOR_URL}/translate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ texts }),
+    });
+  } catch (error) {
+    const reason =
+      error instanceof Error ? error.message : "Unknown network error";
+    throw new Error(
+      `Translation service is unreachable at ${TRANSLATOR_URL}. Start the translator with 'uvicorn translator:app --host 0.0.0.0 --port 8000'. Cause: ${reason}`,
+    );
+  }
 
   if (!response.ok) {
     throw new Error(`Translation service returned HTTP ${response.status}`);

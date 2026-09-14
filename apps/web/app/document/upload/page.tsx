@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useDropzone, FileRejection } from "react-dropzone";
 import {
   Card,
@@ -21,43 +22,65 @@ import {
   FolderOpen,
   ArrowRight,
 } from "lucide-react";
+import { processDocument, uploadDocument } from "@/lib/api";
 
 interface UploadingFile {
   id: string;
   file: File;
   progress: number;
-  status: "uploading" | "completed" | "error";
+  status: "uploading" | "completed" | "processing" | "error";
   errorMessage?: string;
+  documentId?: number;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export default function DocumentWorkspacePage() {
+  const router = useRouter();
   const [files, setFiles] = useState<UploadingFile[]>([]);
 
-  const uploadFile = (fileItem: UploadingFile) => {
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 25;
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        setFiles((prev) =>
-          prev.map((item) =>
-            item.id === fileItem.id
-              ? { ...item, progress: 100, status: "completed" }
-              : item,
-          ),
-        );
-      } else {
-        setFiles((prev) =>
-          prev.map((item) =>
-            item.id === fileItem.id
-              ? { ...item, progress: currentProgress }
-              : item,
-          ),
-        );
-      }
-    }, 250);
+  const uploadFile = async (fileItem: UploadingFile) => {
+    try {
+      setFiles((prev) =>
+        prev.map((item) =>
+          item.id === fileItem.id ? { ...item, progress: 25 } : item,
+        ),
+      );
+      const document = await uploadDocument(fileItem.file);
+      setFiles((prev) =>
+        prev.map((item) =>
+          item.id === fileItem.id
+            ? {
+                ...item,
+                progress: 100,
+                status: "processing",
+                documentId: document.id,
+              }
+            : item,
+        ),
+      );
+
+      await processDocument(document.id);
+
+      setFiles((prev) =>
+        prev.map((item) =>
+          item.id === fileItem.id ? { ...item, status: "completed" } : item,
+        ),
+      );
+    } catch (error) {
+      setFiles((prev) =>
+        prev.map((item) =>
+          item.id === fileItem.id
+            ? {
+                ...item,
+                status: "error",
+                errorMessage:
+                  error instanceof Error ? error.message : "Upload failed",
+              }
+            : item,
+        ),
+      );
+    }
   };
 
   const onDrop = useCallback(
@@ -242,6 +265,15 @@ export default function DocumentWorkspacePage() {
                             </Badge>
                           )}
 
+                          {status === "processing" && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] h-5 font-normal"
+                            >
+                              Processing document...
+                            </Badge>
+                          )}
+
                           {status === "error" && (
                             <span className="text-[11px] text-destructive flex items-center">
                               <AlertCircle className="w-2.5 h-2.5 mr-1" />
@@ -265,7 +297,18 @@ export default function DocumentWorkspacePage() {
               </div>
             )}
 
-            <Button size="sm" disabled={completedCount === 0} className="gap-2">
+            <Button
+              size="sm"
+              disabled={
+                completedCount === 0 ||
+                files.some(
+                  (file) =>
+                    file.status === "uploading" || file.status === "processing",
+                )
+              }
+              onClick={() => router.push("/document")}
+              className="gap-2"
+            >
               Continue <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           </CardContent>

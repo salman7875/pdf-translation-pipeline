@@ -2,7 +2,7 @@ import { PDFParse } from "pdf-parse";
 import { parsePdfRowsToStructure } from "./pdfParseRowsToStructure.js";
 import { translateLayer } from "../translating/translateLayer.js";
 
-export const main = async (dataBuffer: Buffer) => {
+export const processDocument = async (dataBuffer: Buffer) => {
   const parser = new PDFParse({ data: dataBuffer });
   const result: any = await parser.getTable({});
   await parser.destroy();

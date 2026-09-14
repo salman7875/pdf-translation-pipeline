@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -29,15 +29,116 @@ import {
   ZoomOut,
   Maximize,
   FileText,
+  Loader2,
+  Trash2,
+  Play,
 } from "lucide-react";
 import { DocumentRecord } from "./types/index.type";
-import { sampleData } from "./data";
 import { DataField } from "./components/data-field";
 import { DataSection } from "./components/data-section";
+import {
+  ApiDocumentWithTranslations,
+  deleteDocument,
+  getDocuments,
+  processDocument,
+} from "@/lib/api";
+
+const emptyRecord = (
+  document: ApiDocumentWithTranslations,
+): DocumentRecord => ({
+  "Sr.No": document.id,
+  "Document No.& Year": document.documentUrl,
+  "Date of Execution & Date of Presentation & Date of Registration": [],
+  Nature: "Not processed",
+  "Name of Executant(s)": [],
+  "Name of Claimant(s)": [],
+  "Vol.No & Page.No": "-",
+  "Consideration Value": "-",
+  "Market Value": "-",
+  "PR Number": "-",
+  "Document Remarks": "-",
+  "Property Type": "-",
+  "Property Extent": "-",
+  "Village & Street": "-",
+  "Survey No": [],
+  "Plot No": "-",
+  "Boundary Details": "-",
+  "Schedule Remarks": "-",
+});
+
+const toRecord = (
+  document: ApiDocumentWithTranslations,
+  translation = document.translations?.[0],
+): DocumentRecord => {
+  if (!translation) return emptyRecord(document);
+
+  return {
+    ...emptyRecord(document),
+    "Sr.No": Number(translation.srNo) || document.id,
+    "Document No.& Year": translation.documentNo,
+    "Date of Execution & Date of Presentation & Date of Registration":
+      translation.dateOfExecution.split(" ").filter(Boolean),
+    Nature: translation.nature,
+    "Name of Executant(s)":
+      translation.executants?.map((item) => item.name) ?? [],
+    "Name of Claimant(s)":
+      translation.claimants?.map((item) => item.name) ?? [],
+    "Vol.No & Page.No": translation.volNo,
+    "Consideration Value": translation.considerationValue,
+    "Market Value": translation.marketValue,
+    "PR Number": translation.prNumber,
+    "Document Remarks": translation.documentRemarks,
+    "Property Type": translation.propertyType,
+    "Property Extent": translation.propertyExtent,
+    "Plot No": translation.plotNo,
+    "Survey No": translation.surveyNo.split(", ").filter(Boolean),
+    "Boundary Details": translation.boundaryDetail,
+    "Schedule Remarks": translation.scheduleRemarks,
+  };
+};
+
+const rowsForDocument = (document: ApiDocumentWithTranslations) => {
+  const translations = document.translations ?? [];
+  return translations.length === 0
+    ? [{ document, row: toRecord(document) }]
+    : translations.map((translation) => ({
+        document,
+        row: toRecord(document, translation),
+      }));
+};
 
 export default function DocumentRegistryPage() {
-  const [selectedNature, setSelectedNature] = useState<string>("all");
+  const [documents, setDocuments] = useState<ApiDocumentWithTranslations[]>([]);
+  const [filters, setFilters] = useState({
+    buyerName: "",
+    sellerName: "",
+    houseNumber: "",
+    surveyNumber: "",
+    documentNumber: "",
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [comparingDoc, setComparingDoc] = useState<DocumentRecord | null>(null);
+
+  const loadDocuments = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setDocuments(await getDocuments(filters));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to load documents",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadDocuments();
+  }, [filters]);
 
   if (comparingDoc) {
     return (
@@ -207,13 +308,30 @@ export default function DocumentRegistryPage() {
               </CardTitle>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 sm:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search Doc No..."
-                  className="pl-8 h-8 text-xs"
-                />
-              </div>
+              {(
+                [
+                  ["documentNumber", "Document No."],
+                  ["buyerName", "Buyer"],
+                  ["sellerName", "Seller"],
+                  ["houseNumber", "House No."],
+                  ["surveyNumber", "Survey No."],
+                ] as const
+              ).map(([key, placeholder]) => (
+                <div className="relative w-32" key={key}>
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
+                  <Input
+                    placeholder={placeholder}
+                    value={filters[key]}
+                    onChange={(event) =>
+                      setFilters((current) => ({
+                        ...current,
+                        [key]: event.target.value,
+                      }))
+                    }
+                    className="pl-8 h-8 text-xs"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </CardHeader>
@@ -232,61 +350,118 @@ export default function DocumentRegistryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sampleData.map((row) => (
-                  <TableRow key={row["Sr.No"]}>
-                    <TableCell className="font-medium text-center">
-                      {row["Sr.No"]}
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-semibold text-foreground">
-                        {row["Document No.& Year"]}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] font-normal mb-1"
-                      >
-                        {row.Nature}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1 max-w-50">
-                        {row["Name of Executant(s)"].map((name, i) => (
-                          <div key={i} className="text-[11px] truncate">
-                            {name}
-                          </div>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{row["Property Type"]}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {row["Property Extent"]}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <MoreHorizontal className="w-3.5 h-3.5" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-xs font-medium text-primary cursor-pointer"
-                            onClick={() => setComparingDoc(row)}
-                          >
-                            <SplitSquareHorizontal className="w-3.5 h-3.5 mr-2" />{" "}
-                            Compare w/ PDF
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-xs">
-                            <Download className="w-3.5 h-3.5 mr-2" /> Download
-                            Record
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-10">
+                      <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
+                {!isLoading && error && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="text-center text-destructive py-10"
+                    >
+                      {error}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading && !error && documents.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="text-center text-muted-foreground py-10"
+                    >
+                      No documents found.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading &&
+                  !error &&
+                  documents
+                    .flatMap(rowsForDocument)
+                    .map(({ document, row }) => {
+                      return (
+                        <TableRow
+                          key={`${document.id}-${row["Sr.No"]}-${row["Document No.& Year"]}`}
+                        >
+                          <TableCell className="font-medium text-center">
+                            {row["Sr.No"]}
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-semibold text-foreground">
+                              {row["Document No.& Year"]}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-normal mb-1"
+                            >
+                              {row.Nature}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1 max-w-50">
+                              {row["Name of Executant(s)"].map((name, i) => (
+                                <div key={i} className="text-[11px] truncate">
+                                  {name}
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">
+                              {row["Property Type"]}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                              {row["Property Extent"]}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger>
+                                <MoreHorizontal className="w-3.5 h-3.5" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  className="text-xs font-medium text-primary cursor-pointer"
+                                  onClick={() => setComparingDoc(row)}
+                                >
+                                  <SplitSquareHorizontal className="w-3.5 h-3.5 mr-2" />{" "}
+                                  Compare w/ PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-xs"
+                                  onClick={async () => {
+                                    await processDocument(document.id);
+                                    await loadDocuments();
+                                  }}
+                                >
+                                  <Play className="w-3.5 h-3.5 mr-2" /> Process
+                                  document
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-xs"
+                                  onClick={async () => {
+                                    await deleteDocument(document.id);
+                                    await loadDocuments();
+                                  }}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
+                                  document
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-xs">
+                                  <Download className="w-3.5 h-3.5 mr-2" />{" "}
+                                  Download Record
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
               </TableBody>
             </Table>
           </div>

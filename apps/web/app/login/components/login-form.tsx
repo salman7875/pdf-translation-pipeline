@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "cn";
 
 import { Button } from "@/components/ui/button";
@@ -9,13 +13,46 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { login, register, setAccessToken } from "@/lib/api";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const result = isRegistering
+        ? await register(email, username, password)
+        : await login(email, password);
+      setAccessToken(result.accessToken);
+      router.push("/document");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Login failed",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form
+      className={cn("flex flex-col gap-6", className)}
+      onSubmit={handleSubmit}
+      {...props}
+    >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Login to your account</h1>
@@ -25,8 +62,26 @@ export function LoginForm({
         </div>
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input id="email" type="email" placeholder="m@example.com" required />
+          <Input
+            id="email"
+            type="email"
+            placeholder="m@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
         </Field>
+        {isRegistering && (
+          <Field>
+            <FieldLabel htmlFor="username">Username</FieldLabel>
+            <Input
+              id="username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              required
+            />
+          </Field>
+        )}
         <Field>
           <div className="flex items-center">
             <FieldLabel htmlFor="password">Password</FieldLabel>
@@ -37,10 +92,23 @@ export function LoginForm({
               Forgot your password?
             </a>
           </div>
-          <Input id="password" type="password" required />
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
         </Field>
+        {error && <p className="text-sm text-destructive">{error}</p>}
         <Field>
-          <Button type="submit">Login</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting
+              ? "Please wait..."
+              : isRegistering
+                ? "Create account"
+                : "Login"}
+          </Button>
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
@@ -54,10 +122,16 @@ export function LoginForm({
             Login with GitHub
           </Button>
           <FieldDescription className="text-center">
-            Don&apos;t have an account?{" "}
-            <a href="#" className="underline underline-offset-4">
-              Sign up
-            </a>
+            {isRegistering
+              ? "Already have an account?"
+              : "Don't have an account?"}{" "}
+            <button
+              type="button"
+              onClick={() => setIsRegistering((current) => !current)}
+              className="underline underline-offset-4"
+            >
+              {isRegistering ? "Login" : "Sign up"}
+            </button>
           </FieldDescription>
         </Field>
       </FieldGroup>

@@ -3,6 +3,7 @@ import { createObjectCommand, getObjectCommand } from "../../libs/s3/object";
 import { generateSignedUrl } from "../../libs/s3/signed-url";
 import {
   createDocument,
+  type DocumentListFilters,
   findDocumentById,
   listDocuments,
   processAndSaveDocument,
@@ -98,7 +99,23 @@ const uploadDocument = async (req: Request, res: Response) => {
 
 const getDocuments = async (req: Request, res: Response) => {
   try {
-    const documents = await listDocuments(req.user.id);
+    const filters: DocumentListFilters = {};
+    const query = req.query as Record<string, unknown>;
+
+    for (const key of [
+      "buyerName",
+      "sellerName",
+      "houseNumber",
+      "surveyNumber",
+      "documentNumber",
+    ] as const) {
+      const value = query[key];
+      if (typeof value === "string" && value.trim()) {
+        filters[key] = value.trim();
+      }
+    }
+
+    const documents = await listDocuments(req.user.id, filters);
     res.json({ success: true, data: documents });
   } catch (err) {
     sendError(
