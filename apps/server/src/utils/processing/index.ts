@@ -1,17 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { PDFParse } from "pdf-parse";
-import { parsePdfRowsToStructure } from "./pdfParseRowsToStructure";
-import { translateLayer } from "../translating/translateLayer";
+import { parsePdfRowsToStructure } from "./pdfParseRowsToStructure.js";
+import { translateLayer } from "../translating/translateLayer.js";
 
-const main = async () => {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-
-  const dataBuffer = fs.readFileSync(
-    path.join(__dirname, "..", "/assets", "tamil_test.pdf"),
-  );
+export const main = async (dataBuffer: Buffer) => {
   const parser = new PDFParse({ data: dataBuffer });
   const result: any = await parser.getTable({});
   await parser.destroy();
@@ -29,4 +20,3 @@ const main = async () => {
   const translated = await translateLayer(structeredData);
   return translated;
 };
-await main();

@@ -1,4 +1,9 @@
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
+import s3Client from "./index.js";
 
 type CreateObjectT = {
   bucketName: string;
@@ -30,3 +35,29 @@ export const getObjectCommand = async ({
   const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
   return command;
 };
+
+export const downloadObject = async ({
+  bucketName,
+  key,
+}: {
+  bucketName: string;
+  key: string;
+}) => {
+  const response = await s3Client.send(
+    new GetObjectCommand({ Bucket: bucketName, Key: key }),
+  );
+
+  if (!response.Body) {
+    throw new Error("Uploaded document has no content");
+  }
+
+  return Buffer.from(await response.Body.transformToByteArray());
+};
+
+export const deleteObjectCommand = async ({
+  bucketName,
+  key,
+}: {
+  bucketName: string;
+  key: string;
+}) => new DeleteObjectCommand({ Bucket: bucketName, Key: key });

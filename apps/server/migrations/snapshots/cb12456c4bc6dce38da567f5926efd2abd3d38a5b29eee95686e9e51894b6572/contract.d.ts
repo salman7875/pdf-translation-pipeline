@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'3adbee9615380dba97c84c054f4d183b71bcdba026b324414c7778c676439d27'>;
+  StorageHashBase<'cb12456c4bc6dce38da567f5926efd2abd3d38a5b29eee95686e9e51894b6572'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
@@ -257,7 +257,6 @@ export type FieldOutputTypes = {
     };
     readonly Translation: {
       readonly id: CodecTypes['pg/int4@1']['output'];
-      readonly documentId: CodecTypes['pg/int4@1']['output'];
       readonly srNo: CodecTypes['pg/text@1']['output'];
       readonly documentNo: CodecTypes['pg/text@1']['output'];
       readonly dateOfExecution: CodecTypes['pg/text@1']['output'];
@@ -301,7 +300,6 @@ export type FieldInputTypes = {
     };
     readonly Translation: {
       readonly id: CodecTypes['pg/int4@1']['input'];
-      readonly documentId: CodecTypes['pg/int4@1']['input'];
       readonly srNo: CodecTypes['pg/text@1']['input'];
       readonly documentNo: CodecTypes['pg/text@1']['input'];
       readonly dateOfExecution: CodecTypes['pg/text@1']['input'];
@@ -347,7 +345,6 @@ export type StorageColumnTypes = {
       readonly boundaryDetail: CodecTypes['pg/text@1']['output'];
       readonly considerationValue: CodecTypes['pg/text@1']['output'];
       readonly dateOfExecution: CodecTypes['pg/text@1']['output'];
-      readonly documentId: CodecTypes['pg/int4@1']['output'];
       readonly documentNo: CodecTypes['pg/text@1']['output'];
       readonly documentRemarks: CodecTypes['pg/text@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
@@ -391,7 +388,6 @@ export type StorageColumnInputTypes = {
       readonly boundaryDetail: CodecTypes['pg/text@1']['input'];
       readonly considerationValue: CodecTypes['pg/text@1']['input'];
       readonly dateOfExecution: CodecTypes['pg/text@1']['input'];
-      readonly documentId: CodecTypes['pg/int4@1']['input'];
       readonly documentNo: CodecTypes['pg/text@1']['input'];
       readonly documentRemarks: CodecTypes['pg/text@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
@@ -584,11 +580,6 @@ type ContractBase = Omit<
                     readonly expression: 'autoincrement()';
                   };
                 };
-                readonly documentId: {
-                  readonly nativeType: 'int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                };
                 readonly srNo: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
@@ -666,29 +657,9 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['documentId', 'srNo'] }];
-              indexes: readonly [
-                {
-                  readonly name: 'translation_documentId_idx_825ef746';
-                  readonly prefix: 'translation_documentId_idx';
-                  readonly columns: readonly ['documentId'];
-                  readonly unique: false;
-                },
-              ];
-              foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'translation';
-                    readonly columns: readonly ['documentId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'document';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-              ];
+              uniques: readonly [{ readonly columns: readonly ['srNo'] }];
+              indexes: readonly [];
+              foreignKeys: readonly [];
             };
             readonly user: {
               columns: {
@@ -800,17 +771,6 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
-              readonly translations: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Translation';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['documentId'];
-                };
-              };
               readonly user: {
                 readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
                 readonly cardinality: 'N:1';
@@ -871,10 +831,6 @@ type ContractBase = Omit<
           readonly Translation: {
             readonly fields: {
               readonly id: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly documentId: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
@@ -951,17 +907,6 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['translationId'];
                 };
               };
-              readonly document: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Document';
-                };
-                readonly cardinality: 'N:1';
-                readonly on: {
-                  readonly localFields: readonly ['documentId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
               readonly executants: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -979,7 +924,6 @@ type ContractBase = Omit<
               readonly namespaceId: 'public';
               readonly fields: {
                 readonly id: { readonly column: 'id' };
-                readonly documentId: { readonly column: 'documentId' };
                 readonly srNo: { readonly column: 'srNo' };
                 readonly documentNo: { readonly column: 'documentNo' };
                 readonly dateOfExecution: { readonly column: 'dateOfExecution' };

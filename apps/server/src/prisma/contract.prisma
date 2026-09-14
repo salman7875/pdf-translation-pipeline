@@ -5,7 +5,7 @@ model User {
   email    String    @unique
   username String?
   password String
-  document Document?
+  documents Document[]
 
   @@map("user")
 }
@@ -13,15 +13,17 @@ model User {
 model Document {
   id          Int    @id @default(autoincrement())
   documentUrl String
-  userId      Int    @unique
+  userId      Int
   user        User   @relation(fields: [userId], references: [id])
+  translations Translation[]
 
   @@map("document")
 }
 
 model Translation {
   id                 Int         @id @default(autoincrement())
-  srNo               String      @unique
+  documentId         Int
+  srNo               String
   documentNo         String
   dateOfExecution    String
   nature             String
@@ -38,6 +40,9 @@ model Translation {
   surveyNo           String
   boundaryDetail     String
   scheduleRemarks    String
+  document           Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, srNo])
 
   @@map("translation")
 }
@@ -46,7 +51,7 @@ model Executant {
   id            Int         @id @default(autoincrement())
   name          String
   translationId Int
-  translation   Translation @relation(fields: [translationId], references: [id])
+  translation   Translation @relation(fields: [translationId], references: [id], onDelete: Cascade)
 
   @@map("executant")
 }
@@ -55,7 +60,7 @@ model Claimant {
   id            Int         @id @default(autoincrement())
   name          String
   translationId Int
-  translation   Translation @relation(fields: [translationId], references: [id])
+  translation   Translation @relation(fields: [translationId], references: [id], onDelete: Cascade)
 
   @@map("claimant")
 }

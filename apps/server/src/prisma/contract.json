@@ -57,8 +57,12 @@
               "translation": {
                 "cardinality": "N:1",
                 "on": {
-                  "localFields": ["translationId"],
-                  "targetFields": ["id"]
+                  "localFields": [
+                    "translationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
                 },
                 "to": {
                   "model": "Translation",
@@ -107,11 +111,30 @@
               }
             },
             "relations": {
+              "translations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "documentId"
+                  ]
+                },
+                "to": {
+                  "model": "Translation",
+                  "namespace": "public"
+                }
+              },
               "user": {
                 "cardinality": "N:1",
                 "on": {
-                  "localFields": ["userId"],
-                  "targetFields": ["id"]
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
                 },
                 "to": {
                   "model": "User",
@@ -163,8 +186,12 @@
               "translation": {
                 "cardinality": "N:1",
                 "on": {
-                  "localFields": ["translationId"],
-                  "targetFields": ["id"]
+                  "localFields": [
+                    "translationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
                 },
                 "to": {
                   "model": "Translation",
@@ -208,6 +235,13 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "documentId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
@@ -307,19 +341,42 @@
               "claimants": {
                 "cardinality": "1:N",
                 "on": {
-                  "localFields": ["id"],
-                  "targetFields": ["translationId"]
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "translationId"
+                  ]
                 },
                 "to": {
                   "model": "Claimant",
                   "namespace": "public"
                 }
               },
+              "document": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "documentId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Document",
+                  "namespace": "public"
+                }
+              },
               "executants": {
                 "cardinality": "1:N",
                 "on": {
-                  "localFields": ["id"],
-                  "targetFields": ["translationId"]
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "translationId"
+                  ]
                 },
                 "to": {
                   "model": "Executant",
@@ -337,6 +394,9 @@
                 },
                 "dateOfExecution": {
                   "column": "dateOfExecution"
+                },
+                "documentId": {
+                  "column": "documentId"
                 },
                 "documentNo": {
                   "column": "documentNo"
@@ -414,11 +474,15 @@
               }
             },
             "relations": {
-              "document": {
-                "cardinality": "1:1",
+              "documents": {
+                "cardinality": "1:N",
                 "on": {
-                  "localFields": ["id"],
-                  "targetFields": ["userId"]
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
                 },
                 "to": {
                   "model": "Document",
@@ -478,13 +542,18 @@
               },
               "foreignKeys": [
                 {
+                  "onDelete": "cascade",
                   "source": {
-                    "columns": ["translationId"],
+                    "columns": [
+                      "translationId"
+                    ],
                     "namespaceId": "public",
                     "tableName": "claimant"
                   },
                   "target": {
-                    "columns": ["id"],
+                    "columns": [
+                      "id"
+                    ],
                     "namespaceId": "public",
                     "tableName": "translation"
                   }
@@ -492,14 +561,18 @@
               ],
               "indexes": [
                 {
-                  "columns": ["translationId"],
+                  "columns": [
+                    "translationId"
+                  ],
                   "name": "claimant_translationId_idx_5cd3d296",
                   "prefix": "claimant_translationId_idx",
                   "unique": false
                 }
               ],
               "primaryKey": {
-                "columns": ["id"]
+                "columns": [
+                  "id"
+                ]
               },
               "uniques": []
             },
@@ -528,26 +601,37 @@
               "foreignKeys": [
                 {
                   "source": {
-                    "columns": ["userId"],
+                    "columns": [
+                      "userId"
+                    ],
                     "namespaceId": "public",
                     "tableName": "document"
                   },
                   "target": {
-                    "columns": ["id"],
+                    "columns": [
+                      "id"
+                    ],
                     "namespaceId": "public",
                     "tableName": "user"
                   }
                 }
               ],
-              "indexes": [],
-              "primaryKey": {
-                "columns": ["id"]
-              },
-              "uniques": [
+              "indexes": [
                 {
-                  "columns": ["userId"]
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "document_userId_idx_a489d58a",
+                  "prefix": "document_userId_idx",
+                  "unique": false
                 }
-              ]
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
             },
             "executant": {
               "columns": {
@@ -573,13 +657,18 @@
               },
               "foreignKeys": [
                 {
+                  "onDelete": "cascade",
                   "source": {
-                    "columns": ["translationId"],
+                    "columns": [
+                      "translationId"
+                    ],
                     "namespaceId": "public",
                     "tableName": "executant"
                   },
                   "target": {
-                    "columns": ["id"],
+                    "columns": [
+                      "id"
+                    ],
                     "namespaceId": "public",
                     "tableName": "translation"
                   }
@@ -587,14 +676,18 @@
               ],
               "indexes": [
                 {
-                  "columns": ["translationId"],
+                  "columns": [
+                    "translationId"
+                  ],
                   "name": "executant_translationId_idx_5cd3d296",
                   "prefix": "executant_translationId_idx",
                   "unique": false
                 }
               ],
               "primaryKey": {
-                "columns": ["id"]
+                "columns": [
+                  "id"
+                ]
               },
               "uniques": []
             },
@@ -613,6 +706,11 @@
                 "dateOfExecution": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": false
+                },
+                "documentId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
                   "nullable": false
                 },
                 "documentNo": {
@@ -685,14 +783,46 @@
                   "nullable": false
                 }
               },
-              "foreignKeys": [],
-              "indexes": [],
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "documentId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "translation"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "document"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "documentId"
+                  ],
+                  "name": "translation_documentId_idx_825ef746",
+                  "prefix": "translation_documentId_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
-                "columns": ["id"]
+                "columns": [
+                  "id"
+                ]
               },
               "uniques": [
                 {
-                  "columns": ["srNo"]
+                  "columns": [
+                    "documentId",
+                    "srNo"
+                  ]
                 }
               ]
             },
@@ -726,11 +856,15 @@
               "foreignKeys": [],
               "indexes": [],
               "primaryKey": {
-                "columns": ["id"]
+                "columns": [
+                  "id"
+                ]
               },
               "uniques": [
                 {
-                  "columns": ["email"]
+                  "columns": [
+                    "email"
+                  ]
                 }
               ]
             }
@@ -740,7 +874,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "228a86bf59d57d2abffbe4849a082dc92a258457f711cf358dfc86ab84d72ee0"
+    "storageHash": "3adbee9615380dba97c84c054f4d183b71bcdba026b324414c7778c676439d27"
   },
   "capabilities": {
     "postgres": {
