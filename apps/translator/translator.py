@@ -11,13 +11,20 @@ MODEL_NAME = os.getenv(
     "TRANSLATION_MODEL",
     "facebook/nllb-200-distilled-600M",
 )
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+if torch.cuda.is_available():
+    DEVICE = "cuda"
+elif torch.backends.mps.is_available():
+    DEVICE = "mps"
+else:
+    DEVICE = "cpu"
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 tokenizer.src_lang = "tam_Taml"
 TARGET_LANGUAGE_ID = tokenizer.convert_tokens_to_ids("eng_Latn")
 model = AutoModelForSeq2SeqLM.from_pretrained(
     MODEL_NAME,
+    torch_dtype=torch.float16,
 ).to(DEVICE)
 model.eval()
 inference_lock = Lock()
@@ -42,16 +49,17 @@ def translate(request: TranslationRequest) -> dict[str, list[str]]:
 
     with inference_lock:
         inputs = tokenizer(
-            texts,
-            truncation=True,
-            padding="longest",
-            return_tensors="pt",
-        ).to(DEVICE)
+    texts,
+    truncation=True,
+    padding=True, 
+    return_tensors="pt",
+).to(DEVICE)
 
         with torch.inference_mode():
             output_tokens = model.generate(
                 **inputs,
-                max_length=512,
+                max_new_tokens=128,
+                min_length=1,
                 num_beams=1,
                 use_cache=True,
                 forced_bos_token_id=TARGET_LANGUAGE_ID,

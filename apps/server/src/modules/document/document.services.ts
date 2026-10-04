@@ -2,6 +2,7 @@ import { deleteObjectCommand, downloadObject } from "../../libs/s3/object";
 import s3Client from "../../libs/s3";
 import { db } from "../../prisma/db";
 import { processDocument } from "../../utils/processing/index.js";
+import { performance } from "node:perf_hooks";
 
 const bucketName = "my-bucket";
 
@@ -167,14 +168,21 @@ const asStringArray = (value: unknown) =>
     : [];
 
 export const processAndSaveDocument = async (userId: number, id: number) => {
+  const totalStartTime = performance.now();
   const document = await findDocumentById(userId, id);
 
   if (!document) {
     return null;
   }
-
+  const downloadStartTime = performance.now();
   const file = await downloadObject({ bucketName, key: document.documentUrl });
+  const downloadDuration = performance.now() - downloadStartTime;
+
+  const processStartTime = performance.now();
   const records = await processDocument(file);
+  const processDuration = performance.now() - processStartTime;
+
+  const dbStartTime = performance.now();
   const translations = [];
 
   for (const record of records) {
@@ -214,6 +222,27 @@ export const processAndSaveDocument = async (userId: number, id: number) => {
     });
     translations.push(translation);
   }
+  const dbDuration = performance.now() - dbStartTime;
 
-  return { document, translations };
+  const totalDuration = performance.now() - totalStartTime;
+
+  // Log or monitor performance metrics
+  console.log(`[Performance Metrics] processAndSaveDocument (ID: ${id}):`, {
+    totalTimeMs: `${totalDuration.toFixed(2)}ms`,
+    downloadTimeMs: `${downloadDuration.toFixed(2)}ms`,
+    processingTimeMs: `${processDuration.toFixed(2)}ms`,
+    dbInsertionTimeMs: `${dbDuration.toFixed(2)}ms`,
+    recordsProcessed: records.length,
+  });
+
+  return {
+    document,
+    translations,
+    metrics: {
+      totalDuration,
+      downloadDuration,
+      processDuration,
+      dbDuration,
+    },
+  };
 };

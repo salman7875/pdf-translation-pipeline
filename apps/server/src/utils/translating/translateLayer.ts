@@ -17,6 +17,7 @@ type TranslationResponse = { translations: string[] };
 
 const translateBatch = async (texts: string[]): Promise<string[]> => {
   let response: Response;
+  console.log("FOR TR: ", texts);
 
   try {
     response = await fetch(`${TRANSLATOR_URL}/translate`, {
@@ -68,7 +69,6 @@ const translateUniqueTexts = async (
       ),
     ).filter((batch) => batch.length > 0);
     const translatedBatches = await Promise.all(batches.map(translateBatch));
-
     batches.forEach((batch, batchIndex) => {
       batch.forEach((text, textIndex) => {
         translations.set(text, translatedBatches[batchIndex]![textIndex]!);

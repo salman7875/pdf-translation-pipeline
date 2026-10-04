@@ -186,7 +186,6 @@ const processDocument = async (req: Request, res: Response) => {
       sendError(res, 400, "Document id must be a positive integer");
       return;
     }
-
     const result = await processAndSaveDocument(req.user.id, id);
     if (!result) {
       sendError(res, 404, "Document not found");
