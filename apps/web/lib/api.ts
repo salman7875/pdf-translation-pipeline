@@ -49,10 +49,15 @@ type ApiResponse<T> = {
 export const getAccessToken = () =>
   typeof window === "undefined" ? null : window.localStorage.getItem(TOKEN_KEY);
 
-export const setAccessToken = (token: string) =>
+export const setAccessToken = (token: string) => {
   window.localStorage.setItem(TOKEN_KEY, token);
+  window.dispatchEvent(new Event("pdf-pipeline-auth-change"));
+};
 
-export const clearAccessToken = () => window.localStorage.removeItem(TOKEN_KEY);
+export const clearAccessToken = () => {
+  window.localStorage.removeItem(TOKEN_KEY);
+  window.dispatchEvent(new Event("pdf-pipeline-auth-change"));
+};
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
